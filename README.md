@@ -1,11 +1,3 @@
-Netflix Clone CI/CD with Monitoring | Jenkins | Docker| Kubernetes| Monitoring | DevSecOps
-
-mrcloudbook.com
-
-·
-
-8 January 2024
-
 Hello friends, we will be deploying a Netflix clone. We will be using Jenkins as a CICD tool and deploying our application on a Docker container and Kubernetes Cluster and we will monitor the Jenkins and Kubernetes metrics using Grafana, Prometheus and Node exporter. I Hope this detailed blog is useful.
 
 CLICK HERE FOR GITHUB REPOSITORY
@@ -780,387 +772,120 @@ You will see that in status, a graph will also be generated and Vulnerabilities.
 Step 10 — Docker Image Build and Push
 We need to install the Docker tool in our system, Goto Dashboard → Manage Plugins → Available plugins → Search for Docker and install these plugins
 
-Docker
+ChatGPT said:
+ChatGPT
+To make a concise and detailed README file for your Netflix Clone CI/CD project with monitoring, I'll summarize the content you provided, while maintaining a professional and organized structure.
 
-Docker Commons
+Netflix Clone CI/CD with Monitoring | Jenkins | Docker | Kubernetes | DevSecOps
+Author: mrcloudbook.com
+Date: 8 January 2024
 
-Docker Pipeline
+Overview
+This project demonstrates deploying a Netflix Clone application using a CI/CD pipeline built with Jenkins, Docker, and Kubernetes, while integrating DevSecOps practices. Monitoring is enabled using Grafana, Prometheus, and Node Exporter to provide insights into the performance and health of the infrastructure.
 
-Docker API
+Key Highlights
+CI/CD Pipeline with Jenkins
+Containerization with Docker
+Kubernetes cluster deployment
+DevSecOps tools: SonarQube and Trivy
+Monitoring with Grafana and Prometheus
+Steps to Set Up the Project
+1. Launch an EC2 Instance
+Instance Type: Ubuntu (22.04) T2 Large
+Open all ports in the Security Group for simplicity during learning. (For production, follow security best practices.)
+2. Install Prerequisite Tools
+A. Jenkins
+Install Jenkins to manage the CI/CD pipeline:
 
-docker-build-step
+bash
+Copy code
+sudo apt update -y
+sudo apt install openjdk-17-jdk -y
+wget -q -O - https://pkg.jenkins.io/debian-stable/jenkins.io.key | sudo tee /usr/share/keyrings/jenkins-keyring.asc > /dev/null
+echo deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/ | sudo tee /etc/apt/sources.list.d/jenkins.list > /dev/null
+sudo apt update -y
+sudo apt install jenkins -y
+sudo systemctl start jenkins
+sudo systemctl enable jenkins
+B. Docker
+Install Docker for containerization:
 
-and click on install without restart
-
-
-Now, goto Dashboard → Manage Jenkins → Tools →
-
-
-Add DockerHub Username and Password under Global Credentials
-
-
-Add this stage to Pipeline Script
-
-
-stage("Docker Build & Push"){
-            steps{
-                script{
-                   withDockerRegistry(credentialsId: 'docker', toolName: 'docker'){
-                       sh "docker build --build-arg TMDB_V3_API_KEY=Aj7ay86fe14eca3e76869b92 -t netflix ."
-                       sh "docker tag netflix sevenajay/netflix:latest "
-                       sh "docker push sevenajay/netflix:latest "
-                    }
-                }
-            }
-        }
-        stage("TRIVY"){
-            steps{
-                sh "trivy image sevenajay/netflix:latest > trivyimage.txt"
-            }
-        }
-You will see the output below, with a dependency trend.
-
-
-When you log in to Dockerhub, you will see a new image is created
-
-
-Now Run the container to see if the game coming up or not by adding the below stage
-
-
-stage('Deploy to container'){
-            steps{
-                sh 'docker run -d --name netflix -p 8081:80 sevenajay/netflix:latest'
-            }
-        }
-stage view
-
-
-<Jenkins-public-ip:8081>
-
-You will get this output
-
-
-Step 11 — Kuberenetes Setup
-Connect your machines to Putty or Mobaxtreme
-
-Take-Two Ubuntu 20.04 instances one for k8s master and the other one for worker.
-
-Install Kubectl on Jenkins machine also.
-
-Kubectl is to be installed on Jenkins also
-
-sudo apt update
-sudo apt install curl
-curl -LO https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl
-sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
-kubectl version --client
-Part 1 ———-Master Node————
-
-sudo hostnamectl set-hostname K8s-Master
-———-Worker Node————
-
-sudo hostnamectl set-hostname K8s-Worker
-Part 2 ————Both Master & Node ————
-
-sudo apt-get update
-sudo apt-get install -y docker.io
-sudo usermod –aG docker Ubuntu
+bash
+Copy code
+sudo apt update -y
+sudo apt install docker.io -y
+sudo usermod -aG docker $USER
 newgrp docker
 sudo chmod 777 /var/run/docker.sock
-Part 3 ————— Master —————
+C. Trivy
+Install Trivy for vulnerability scanning:
 
-sudo apt-get update
-sudo apt-get install -y apt-transport-https ca-certificates curl gpg
-curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
-sudo apt-get update
-sudo apt-get install -y kubelet kubeadm kubectl
-sudo apt-mark hold kubelet kubeadm kubectl
-———-Worker Node————
+bash
+Copy code
+sudo apt install wget apt-transport-https gnupg lsb-release -y
+wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | gpg --dearmor | sudo tee /usr/share/keyrings/trivy.gpg > /dev/null
+echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee /etc/apt/sources.list.d/trivy.list
+sudo apt update
+sudo apt install trivy -y
+D. SonarQube
+Run SonarQube in a Docker container to ensure code quality:
 
-sudo kubeadm init --pod-network-cidr=10.244.0.0/16
-# in case your in root exit from it and run below commands
-mkdir -p $HOME/.kube
-sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
-sudo chown $(id -u):$(id -g) $HOME/.kube/config
-kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
-Copy the config file to Jenkins master or the local file manager and save it
+bash
+Copy code
+docker run -d --name sonarqube -p 9000:9000 sonarqube:lts-community
+3. Create a TMDB API Key
+Visit TMDB and create an account.
+Navigate to Settings > API > Create a Key.
+Use this API key in your Netflix Clone application.
+4. Set Up Monitoring
+A. Prometheus
+Create a dedicated Prometheus system user:
+bash
+Copy code
+sudo useradd --system --no-create-home --shell /bin/false prometheus
+Download and install Prometheus:
+bash
+Copy code
+wget https://github.com/prometheus/prometheus/releases/download/v2.47.1/prometheus-2.47.1.linux-amd64.tar.gz
+tar -xvf prometheus-2.47.1.linux-amd64.tar.gz
+sudo mv prometheus /usr/local/bin/
+Configure Prometheus service:
+bash
+Copy code
+sudo vim /etc/systemd/system/prometheus.service
+# Add Prometheus service configuration here
+sudo systemctl enable prometheus
+sudo systemctl start prometheus
+B. Node Exporter
+Install Node Exporter to collect system metrics:
 
-
-copy it and save it in documents or another folder save it as secret-file.txt
-
-Note: create a secret-file.txt in your file explorer save the config in it and use this at the kubernetes credential section.
-
-Install Kubernetes Plugin, Once it’s installed successfully
-
-
-goto manage Jenkins –> manage credentials –> Click on Jenkins global –> add credentials
-
-
-Install Node_exporter on both master and worker
-Let’s add Node_exporter on Master and Worker to monitor the metrics
-
-First, let’s create a system user for Node Exporter by running the following command:
-
-
-sudo useradd \
-    --system \
-    --no-create-home \
-    --shell /bin/false node_exporter
-
-You can download Node Exporter from the same page.
-
-Use the wget command to download the binary.
-
-
+bash
+Copy code
 wget https://github.com/prometheus/node_exporter/releases/download/v1.6.1/node_exporter-1.6.1.linux-amd64.tar.gz
-
-Extract the node exporter from the archive.
-
-
 tar -xvf node_exporter-1.6.1.linux-amd64.tar.gz
-
-Move binary to the /usr/local/bin.
-
-
-sudo mv \
-  node_exporter-1.6.1.linux-amd64/node_exporter \
-  /usr/local/bin/
-
-Clean up, and delete node_exporter archive and a folder.
-
-
-rm -rf node_exporter*
-
-Verify that you can run the binary.
-
-
-node_exporter --version
-
-Node Exporter has a lot of plugins that we can enable. If you run Node Exporter help you will get all the options.
-
-
-node_exporter --help
-–collector.logind We’re going to enable the login controller, just for the demo.
-
-Next, create a similar systemd unit file.
-
-
-sudo vim /etc/systemd/system/node_exporter.service
-
-node_exporter.service
-
-
-[Unit]
-Description=Node Exporter
-Wants=network-online.target
-After=network-online.target
-StartLimitIntervalSec=500
-StartLimitBurst=5
-[Service]
-User=node_exporter
-Group=node_exporter
-Type=simple
-Restart=on-failure
-RestartSec=5s
-ExecStart=/usr/local/bin/node_exporter \
-    --collector.logind
-[Install]
-WantedBy=multi-user.target
-
-Replace Prometheus user and group to node_exporter, and update the ExecStart command.
-
-To automatically start the Node Exporter after reboot, enable the service.
-
-
-sudo systemctl enable node_exporter
-Then start the Node Exporter.
-
-
-sudo systemctl start node_exporter
-
-Check the status of Node Exporter with the following command:
-
-
-sudo systemctl status node_exporter
-
-If you have any issues, check logs with journalctl
-
-
-journalctl -u node_exporter -f --no-pager
-At this point, we have only a single target in our Prometheus. There are many different service discovery mechanisms built into Prometheus. For example, Prometheus can dynamically discover targets in AWS, GCP, and other clouds based on the labels. In the following tutorials, I’ll give you a few examples of deploying Prometheus in a cloud-specific environment. For this tutorial, let’s keep it simple and keep adding static targets. Also, I have a lesson on how to deploy and manage Prometheus in the Kubernetes cluster.
-
-To create a static target, you need to add job_name with static_configs. Go to Prometheus server
-
-
-sudo vim /etc/prometheus/prometheus.yml
-
-prometheus.yml
-
-
-- job_name: node_export_masterk8s
-    static_configs:
-      - targets: ["<master-ip>:9100"]
-  - job_name: node_export_workerk8s
-    static_configs:
-      - targets: ["<worker-ip>:9100"]
-By default, Node Exporter will be exposed on port 9100.
-
-
-Since we enabled lifecycle management via API calls, we can reload the Prometheus config without restarting the service and causing downtime.
-
-Before, restarting check if the config is valid.
-
-
-promtool check config /etc/prometheus/prometheus.yml
-
-Then, you can use a POST request to reload the config.
-
-
-curl -X POST http://localhost:9090/-/reload
-
-Check the targets section
-
-
-http://<ip>:9090/targets
-
-final step to deploy on the Kubernetes cluster
-
-
-stage('Deploy to kubernets'){
-            steps{
-                script{
-                    dir('Kubernetes') {
-                        withKubeConfig(caCertificate: '', clusterName: '', contextName: '', credentialsId: 'k8s', namespace: '', restrictKubeConfigAccess: false, serverUrl: '') {
-                                sh 'kubectl apply -f deployment.yml'
-                                sh 'kubectl apply -f service.yml'
-                        }
-                    }
-                }
-            }
-        }
-stage view
-
-
-In the Kubernetes cluster(master) give this command
-
-
-kubectl get all 
-kubectl get svc
-
-STEP 12:Access from a Web browser with
-<public-ip-of-slave:service port>
-
-output:
-
-
-Monitoring
-
-
-
-
-Mail
-
-
-Step 13: Terminate instances.
-Complete Pipeline
-
-pipeline{
-    agent any
-    tools{
-        jdk 'jdk17'
-        nodejs 'node16'
-    }
-    environment {
-        SCANNER_HOME=tool 'sonar-scanner'
-    }
-    stages {
-        stage('clean workspace'){
-            steps{
-                cleanWs()
-            }
-        }
-        stage('Checkout from Git'){
-            steps{
-                git branch: 'main', url: 'https://github.com/Aj7Ay/Netflix-clone.git'
-            }
-        }
-        stage("Sonarqube Analysis "){
-            steps{
-                withSonarQubeEnv('sonar-server') {
-                    sh ''' $SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=Netflix \
-                    -Dsonar.projectKey=Netflix '''
-                }
-            }
-        }
-        stage("quality gate"){
-           steps {
-                script {
-                    waitForQualityGate abortPipeline: false, credentialsId: 'Sonar-token' 
-                }
-            } 
-        }
-        stage('Install Dependencies') {
-            steps {
-                sh "npm install"
-            }
-        }
-        stage('OWASP FS SCAN') {
-            steps {
-                dependencyCheck additionalArguments: '--scan ./ --disableYarnAudit --disableNodeAudit', odcInstallation: 'DP-Check'
-                dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
-            }
-        }
-        stage('TRIVY FS SCAN') {
-            steps {
-                sh "trivy fs . > trivyfs.txt"
-            }
-        }
-        stage("Docker Build & Push"){
-            steps{
-                script{
-                   withDockerRegistry(credentialsId: 'docker', toolName: 'docker'){   
-                       sh "docker build --build-arg TMDB_V3_API_KEY=AJ7AYe14eca3e76864yah319b92 -t netflix ."
-                       sh "docker tag netflix sevenajay/netflix:latest "
-                       sh "docker push sevenajay/netflix:latest "
-                    }
-                }
-            }
-        }
-        stage("TRIVY"){
-            steps{
-                sh "trivy image sevenajay/netflix:latest > trivyimage.txt" 
-            }
-        }
-        stage('Deploy to container'){
-            steps{
-                sh 'docker run -d --name netflix -p 8081:80 sevenajay/netflix:latest'
-            }
-        }
-        stage('Deploy to kubernets'){
-            steps{
-                script{
-                    dir('Kubernetes') {
-                        withKubeConfig(caCertificate: '', clusterName: '', contextName: '', credentialsId: 'k8s', namespace: '', restrictKubeConfigAccess: false, serverUrl: '') {
-                                sh 'kubectl apply -f deployment.yml'
-                                sh 'kubectl apply -f service.yml'
-                        }   
-                    }
-                }
-            }
-        }
-
-    }
-    post {
-     always {
-        emailext attachLog: true,
-            subject: "'${currentBuild.result}'",
-            body: "Project: ${env.JOB_NAME}<br/>" +
-                "Build Number: ${env.BUILD_NUMBER}<br/>" +
-                "URL: ${env.BUILD_URL}<br/>",
-            to: 'postbox.aj99@gmail.com',
-            attachmentsPattern: 'trivyfs.txt,trivyimage.txt'
-        }
-    }
-}
+sudo mv node_exporter-1.6.1.linux-amd64/node_exporter /usr/local/bin/
+C. Grafana
+Install Grafana for visualization:
+
+bash
+Copy code
+wget -q -O - https://packages.grafana.com/gpg.key | sudo apt-key add -
+sudo add-apt-repository "deb https://packages.grafana.com/oss/deb stable main"
+sudo apt update -y
+sudo apt install grafana -y
+sudo systemctl start grafana-server
+sudo systemctl enable grafana-server
+5. CI/CD Pipeline
+Set Up Jenkins Pipeline: Use a Declarative Pipeline to automate build and deployment.
+Build Docker Image:
+bash
+Copy code
+docker build -t netflix-clone .
+docker push <your-dockerhub-username>/netflix-clone:latest
+Deploy with Kubernetes: Configure Kubernetes for app deployment.
+Monitoring Dashboard
+Prometheus: Collects metrics from Jenkins, Node Exporter, and Kubernetes.
+Grafana: Visualizes metrics and creates dashboards for monitoring.
+Repository
+Find the complete source code and Jenkinsfile in the GitHub Repository: CLICK HERE
 
