@@ -4,6 +4,6 @@ To check the status of the Jenkins service, click the button below to copy the c
 
 ```bash
 sudo systemctl status jenkins
-<button onclick="copyToClipboard()">Copy Command</button>
+
 
 
