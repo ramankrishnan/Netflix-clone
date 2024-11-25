@@ -1,22 +1,9 @@
-# Install Jenkins on RHEL-based Systems
+# Check Jenkins Service Status
 
-Follow these steps to install Jenkins on your system:
+To check the status of the Jenkins service, click the button below to copy the command:
 
----
+```bash
+sudo systemctl status jenkins
+<button onclick="copyToClipboard()">Copy Command</button>
 
-**Step 1: Add the Jenkins Repository**
-
-```html
-<pre>
-sudo wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat-stable/jenkins.repo
-<button onclick="copyToClipboard('step1')">Copy</button>
-</pre>
-<script>
-  function copyToClipboard(id) {
-    const text = document.getElementById(id).innerText;
-  }
-  
-Replace before  next script-button combinations yourself if Want
-to 
-to***
-
+<script> function copyToClipboard() { navigator.clipboard.writeText('sudo systemctl status jenkins'); alert('Command copied to clipboard!'); } </script>
